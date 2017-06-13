@@ -1,0 +1,18 @@
+{
+  "defaultSeverity": "error",
+  "extends": [
+    "tslint:recommended"
+  ],
+  "jsRules": {},
+  "rules": {
+    "cyclomatic-complexity": [true, 100],
+    "no-console": false,
+    "quotemark": {
+      "options": ["single"]
+    },
+    "semicolon": {
+      "options": ["never"]
+    }
+  },
+  "rulesDirectory": []
+}

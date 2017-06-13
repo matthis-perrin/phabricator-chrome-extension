@@ -1,0 +1,29 @@
+{
+  "name": "Phabricator+",
+  "short_name": "Phab+",
+  "description": "Phabricator Helper",
+  "version": "0.0.0",
+  "manifest_version": 2,
+  "icons": {
+    "80": "images/icon-80.png"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://phabricator.dropboxer.net/*",
+        "http://phabricator.dropboxer.net/*"
+      ],
+      "css": [
+        "styles/contentscript.css"
+      ],
+      "js": [
+        "scripts/contentscript.js"
+      ],
+      "run_at": "document_end",
+      "all_frames": false
+    }
+  ],
+  "web_accessible_resources": [
+    "fonts/MaterialIcons-Regular.ttf"
+  ]
+}
