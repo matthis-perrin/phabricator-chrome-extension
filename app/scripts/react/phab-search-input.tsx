@@ -1,4 +1,3 @@
-// import * as $j from 'jquery'
 import * as React from 'react'
 
 import {search} from '../actions/actions'
@@ -7,7 +6,7 @@ import {
   KeyboardStore,
   SEARCH_SHORTCUT
 } from '../stores/keyboard'
-import {SEARCH_SET, SearchStore} from '../stores/search'
+import {SEARCH_UPDATED, SearchStore} from '../stores/search'
 
 interface PhabSearchInputState {
   searchValue: string
@@ -23,7 +22,7 @@ export class PhabSearchInput extends React.Component<{}, PhabSearchInputState> {
   componentWillMount() {
     KeyboardStore.on(SEARCH_SHORTCUT, this.handleSearchShortcut)
     KeyboardStore.on(ESCAPE, this.handleEscape)
-    SearchStore.on(SEARCH_SET, this.handleSearchSet)
+    SearchStore.on(SEARCH_UPDATED, this.handleSearchUpdated)
   }
 
   private focusInput = () => {
@@ -62,7 +61,7 @@ export class PhabSearchInput extends React.Component<{}, PhabSearchInputState> {
     search(event.target.value)
   }
 
-  private handleSearchSet = () => {
+  private handleSearchUpdated = () => {
     this.setState({searchValue: SearchStore.getSearch()})
   }
 

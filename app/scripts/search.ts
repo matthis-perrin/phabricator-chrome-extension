@@ -1,6 +1,11 @@
 import {levenshtien, LevenshtienSearchResult} from './damerau-levenshtein'
 
 import {Task} from './models/task'
+import {
+  SearchRange,
+  SearchResult,
+  SearchResults,
+} from './models/search'
 
 interface SearchScore extends LevenshtienSearchResult {
   _content: string
@@ -19,11 +24,6 @@ function searchScoreFromLevenshtien(levenshtein: LevenshtienSearchResult): Searc
   }
 }
 
-interface SearchRange {
-  index: number
-  length: number
-}
-
 interface DetailedSearchResult {
   task: Task
   globalStepsScore: number
@@ -33,23 +33,8 @@ interface DetailedSearchResult {
   matches: {[key: string]: SearchRange[]}
 }
 
-export interface SearchResult {
-  task: Task
-  score: {
-    steps: number
-    relative: number
-    best: number
-  }
-  matches: {[key: string]: SearchRange[]}
-}
-
-export interface SearchResults {
-  topResults: SearchResult[]
-  otherResults: SearchResult[]
-}
 
 export class FuzzySearch {
-
   private _tasks: Task[]
 
   constructor(tasks: Task[]) {

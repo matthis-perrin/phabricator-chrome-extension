@@ -1,17 +1,21 @@
 import {EventEmitter2} from 'eventemitter2'
+import {Task} from './models/task'
 
 
 export enum ActionTypes {
-  SET_SEARCH
+  SET_SEARCH,
+  SET_TASKS,
 }
 
 
 export interface SetSearchPayload {
   search: string
 }
+export interface SetTasksPayload {
+  tasks: Task[]
+}
 
-
-type PayloadTypes = SetSearchPayload
+type PayloadTypes = SetSearchPayload | SetTasksPayload
 
 
 class _Dispatcher extends EventEmitter2 {
