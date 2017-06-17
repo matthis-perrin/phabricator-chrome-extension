@@ -4,7 +4,7 @@ import {EventEmitter2} from 'eventemitter2'
 export const SEARCH_SHORTCUT = 'SEARCH_SHORTCUT'
 export const ESCAPE = 'ESCAPE'
 
-class KeyboardStore extends EventEmitter2 {
+class _KeyboardStore extends EventEmitter2 {
   constructor() {
     super()
     $j(document).bind('keydown', this.handleKeyDown)
@@ -24,4 +24,4 @@ class KeyboardStore extends EventEmitter2 {
   }
 }
 
-export const keyboardStore = new KeyboardStore()
+export const KeyboardStore = new _KeyboardStore()

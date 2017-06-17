@@ -1,26 +1,29 @@
 // import * as $j from 'jquery'
 import * as React from 'react'
-import * as cx from 'classnames'
 
+import {search} from '../actions/actions'
 import {
   ESCAPE,
-  keyboardStore,
+  KeyboardStore,
   SEARCH_SHORTCUT
 } from '../stores/keyboard'
+import {SEARCH_SET, SearchStore} from '../stores/search'
 
 interface PhabSearchInputState {
-
+  searchValue: string
 }
 
 export class PhabSearchInput extends React.Component<{}, PhabSearchInputState> {
   input: HTMLInputElement | undefined
 
   state = {
+    searchValue: ''
   }
 
   componentWillMount() {
-    keyboardStore.on(SEARCH_SHORTCUT, this.handleSearchShortcut)
-    keyboardStore.on(ESCAPE, this.handleEscape)
+    KeyboardStore.on(SEARCH_SHORTCUT, this.handleSearchShortcut)
+    KeyboardStore.on(ESCAPE, this.handleEscape)
+    SearchStore.on(SEARCH_SET, this.handleSearchSet)
   }
 
   private focusInput = () => {
@@ -41,12 +44,6 @@ export class PhabSearchInput extends React.Component<{}, PhabSearchInputState> {
     }
   }
 
-  private emptyInputContent = () => {
-    if (this.input) {
-      this.input.value = ''
-    }
-  }
-
   private handleSearchShortcut = (event: JQueryEventObject) => {
     this.focusInput()
     this.selectInputContent()
@@ -54,18 +51,31 @@ export class PhabSearchInput extends React.Component<{}, PhabSearchInputState> {
 
   private handleEscape = (event: JQueryEventObject) => {
     this.blurInput()
-    this.emptyInputContent()
+    search('')
+  }
+
+  private onInputRender = (input: HTMLInputElement) => {
+    this.input = input
+  }
+
+  private onInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    search(event.target.value)
+  }
+
+  private handleSearchSet = () => {
+    this.setState({searchValue: SearchStore.getSearch()})
   }
 
   render() {
-    const className = cx({
-      'phab-search-input': true,
-      // 'phab-overlay--visible': this.state.isVisible,
-    })
     return (
-      <div className={className}>
+      <div className="phab-search-input">
         <i className="phab-search-input__icon material-icons">search</i>
-        <input type="text" ref={(input) => { this.input = input }}/>
+        <input
+          type="text"
+          ref={this.onInputRender}
+          onChange={this.onInputChange}
+          value={this.state.searchValue}
+        />
       </div>
     )
   }

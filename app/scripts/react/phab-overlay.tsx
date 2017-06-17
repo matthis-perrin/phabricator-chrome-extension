@@ -3,7 +3,7 @@ import * as cx from 'classnames'
 
 import {
   ESCAPE,
-  keyboardStore,
+  KeyboardStore,
   SEARCH_SHORTCUT
 } from '../stores/keyboard'
 
@@ -17,8 +17,8 @@ export class PhabOverlay extends React.Component<{}, PhabOverlayState> {
   }
 
   componentWillMount() {
-    keyboardStore.on(SEARCH_SHORTCUT, this.handleSearchShortcut)
-    keyboardStore.on(ESCAPE, this.handleEscape)
+    KeyboardStore.on(SEARCH_SHORTCUT, this.handleSearchShortcut)
+    KeyboardStore.on(ESCAPE, this.handleEscape)
   }
 
   private handleSearchShortcut = (event: JQueryEventObject) => {
