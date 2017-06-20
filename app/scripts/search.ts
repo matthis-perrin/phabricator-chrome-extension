@@ -1,3 +1,4 @@
+import {Promise} from 'rsvp'
 import {levenshtien, LevenshtienSearchResult} from './damerau-levenshtein'
 
 import {Task} from './models/task'
@@ -41,167 +42,187 @@ export class FuzzySearch {
     this._tasks = tasks
   }
 
-  search(searchString: string): SearchResults {
-    // Score each tasks
-    const splitters = /\W/
-    const splitSearchStrings = searchString.split(splitters).filter(Boolean)
-    const results: DetailedSearchResult[] = []
-    for (let task of this._tasks) {
-      const fields = fieldsForTask(task)
-      let detailedResult: SearchScore[] = []
-      let globalStepsScoreSet = false
-      let globalStepsScore = 1e10
-      let globalRelativeScore = 0
-      let bestGlobalRelativeScore = globalRelativeScore
+  search(searchString: string): Promise<SearchResults> {
+    return new Promise<SearchResults>((resolve, reject) => {
+      // Score each tasks
+      scoreTasks(searchString, this._tasks).then((results: DetailedSearchResult[]) => {
+        // Sort results by score
+        results.sort((res1, res2) => {
+          if (res1.bestGlobalRelativeScore !== res2.bestGlobalRelativeScore) {
+            return res2.bestGlobalRelativeScore - res1.bestGlobalRelativeScore
+          }
+          if (res1.globalRelativeScore !== res2.globalRelativeScore) {
+            return res2.globalRelativeScore - res1.globalRelativeScore
+          }
+          return res1.globalStepsScore - res2.globalStepsScore
+        })
 
-      let contributions = 0
 
-      // Find best match for each token
-      for (let searchToken of splitSearchStrings) {
-        searchToken = searchToken.toLowerCase()
-        let bestPerField: {[field: string]: SearchScore} = {}
-        for (let field of fields) {
-          for (let contentToken of (valueFromKey(task, field.key) || '').split(splitters).filter(Boolean)) {
-            contentToken = contentToken.toLowerCase()
-            let innerBest = searchScoreFromLevenshtien(levenshtien(searchToken, contentToken))
-            innerBest._content = contentToken
-            if (contentToken.length > searchToken.length) {
-              for (let i = 0; i <= contentToken.length - searchToken.length; i++) {
-                const subContent = contentToken.substring(i, searchToken.length + i)
-                const score = searchScoreFromLevenshtien(levenshtien(searchToken, subContent))
-                if (isBetterLevenshtien(score, innerBest)) {
-                  innerBest = score
-                  innerBest._content = subContent
+        // Count how many relevant results we want to return
+        let topResultCount = 0
+        for (let i = 0; i < results.length; i++) {
+          if (results[i].bestGlobalRelativeScore >= 0.4) {
+            topResultCount++
+          } else {
+            break
+          }
+        }
+
+        // Split results in two groups
+        const topResults = results.slice(0, topResultCount)
+        const otherResults = results.slice(topResultCount)
+
+
+        // Extract context for the top results
+        for (let result of topResults) {
+          const matches: {[key: string]: SearchRange[]} = {}
+          for (let i = 0; i < result.detailedResult.length; i++) {
+            const detail = result.detailedResult[i]
+            const value = valueFromKey(result.task, detail._field.key) || ''
+            const index = value.toLowerCase().indexOf(detail._content)
+            const matchesInString = findMatches(detail._search, detail._content)
+            matchesInString.forEach((match) => { match.index += index })
+            if (!matches[detail._field.key]) {
+              matches[detail._field.key] = []
+            }
+            matches[detail._field.key] = matches[detail._field.key].concat(matchesInString)
+          }
+
+          // Merge matches by field
+          for (let matchKey of Object.keys(matches)) {
+            let matchData = matches[matchKey]
+            if (matchData.length > 1) {
+              const stack: SearchRange[] = []
+              matchData.sort((match1, match2) => {
+                return match1.index - match2.index
+              })
+              stack.push(matchData[0])
+              matchData.slice(1).forEach((range, i) => {
+                let top = stack[stack.length - 1]
+                if (top.index + top.length < range.index) {
+                  stack.push(range)
+                } else {
+                  top.length = range.index - top.index + range.length
                 }
-              }
-            }
-            if (!bestPerField[field.key] || isBetterLevenshtien(innerBest, bestPerField[field.key])) {
-              innerBest._search = searchToken
-              innerBest._field = field
-              bestPerField[field.key] = innerBest
+              })
+              matches[matchKey] = stack
             }
           }
+          result.matches = matches
         }
-        const allScores: SearchScore[] = (Object as any).values(bestPerField)
-        const bestScores = allScores.filter((best) => { return best.similarity > 0.2 })
-        detailedResult = detailedResult.concat(bestScores)
-        for (let best of bestScores) {
-          if (!globalStepsScoreSet) {
-            globalStepsScore = 0
-            globalStepsScoreSet = true
+
+
+        // Sort top results again using the match context
+        topResults.sort((res1, res2) => {
+          if (res1.globalRelativeScore !== res2.globalRelativeScore) {
+            return res2.globalRelativeScore - res1.globalRelativeScore
           }
-          globalStepsScore += best.steps * best.steps
-          globalRelativeScore += best.similarity * best.similarity
-          bestGlobalRelativeScore = Math.max(globalRelativeScore, bestGlobalRelativeScore)
-          contributions++
-        }
-      }
-      results.push({
-        task: task,
-        globalStepsScore: globalStepsScore / contributions,
-        globalRelativeScore: globalRelativeScore / contributions,
-        bestGlobalRelativeScore: bestGlobalRelativeScore,
-        detailedResult: detailedResult,
-        matches: {}
+          if (res1.globalStepsScore !== res2.globalStepsScore) {
+            return res1.globalStepsScore - res2.globalStepsScore
+          }
+          return sortRange((Object as any).values(res1.matches)[0], (Object as any).values(res2.matches)[0])
+        })
+
+
+        // Format results
+        const resultMapper = (res: DetailedSearchResult): SearchResult => { return {
+          task: res.task,
+          score: {
+            steps: res.globalStepsScore,
+            relative: res.globalRelativeScore,
+            best: res.bestGlobalRelativeScore,
+          },
+          matches: res.matches,
+        }}
+
+        resolve({
+          topResults: topResults.map(resultMapper),
+          otherResults: otherResults.map(resultMapper),
+        })
       })
-    }
-
-
-    // Sort results by score
-    results.sort((res1, res2) => {
-      if (res1.bestGlobalRelativeScore !== res2.bestGlobalRelativeScore) {
-        return res2.bestGlobalRelativeScore - res1.bestGlobalRelativeScore
-      }
-      if (res1.globalRelativeScore !== res2.globalRelativeScore) {
-        return res2.globalRelativeScore - res1.globalRelativeScore
-      }
-      return res1.globalStepsScore - res2.globalStepsScore
     })
-
-
-    // Count how many relevant results we want to return
-    let topResultCount = 0
-    for (let i = 0; i < results.length; i++) {
-      if (results[i].bestGlobalRelativeScore >= 0.4) {
-        topResultCount++
-      } else {
-        break
-      }
-    }
-
-    // Split results in two groups
-    const topResults = results.slice(0, topResultCount)
-    const otherResults = results.slice(topResultCount)
-
-
-    // Extract context for the top results
-    for (let result of topResults) {
-      const matches: {[key: string]: SearchRange[]} = {}
-      for (let i = 0; i < result.detailedResult.length; i++) {
-        const detail = result.detailedResult[i]
-        const value = valueFromKey(result.task, detail._field.key) || ''
-        const index = value.toLowerCase().indexOf(detail._content)
-        const matchesInString = findMatches(detail._search, detail._content)
-        matchesInString.forEach((match) => { match.index += index })
-        if (!matches[detail._field.key]) {
-          matches[detail._field.key] = []
-        }
-        matches[detail._field.key] = matches[detail._field.key].concat(matchesInString)
-      }
-
-      // Merge matches by field
-      for (let matchKey of Object.keys(matches)) {
-        let matchData = matches[matchKey]
-        if (matchData.length > 1) {
-          const stack: SearchRange[] = []
-          matchData.sort((match1, match2) => {
-            return match1.index - match2.index
-          })
-          stack.push(matchData[0])
-          matchData.slice(1).forEach((range, i) => {
-            let top = stack[stack.length - 1]
-            if (top.index + top.length < range.index) {
-              stack.push(range)
-            } else {
-              top.length = range.index - top.index + range.length
-            }
-          })
-          matches[matchKey] = stack
-        }
-      }
-      result.matches = matches
-    }
-
-
-    // Sort top results again using the match context
-    topResults.sort((res1, res2) => {
-      if (res1.globalRelativeScore !== res2.globalRelativeScore) {
-        return res2.globalRelativeScore - res1.globalRelativeScore
-      }
-      if (res1.globalStepsScore !== res2.globalStepsScore) {
-        return res1.globalStepsScore - res2.globalStepsScore
-      }
-      return sortRange((Object as any).values(res1.matches)[0], (Object as any).values(res2.matches)[0])
-    })
-
-
-    // Format results
-    const resultMapper = (res: DetailedSearchResult): SearchResult => { return {
-      task: res.task,
-      score: {
-        steps: res.globalStepsScore,
-        relative: res.globalRelativeScore,
-        best: res.bestGlobalRelativeScore,
-      },
-      matches: res.matches,
-    }}
-
-    return {
-      topResults: topResults.map(resultMapper),
-      otherResults: otherResults.map(resultMapper),
-    }
   }
 
+}
+
+
+function scoreTasks(searchString: string, tasks: Task[]): Promise<DetailedSearchResult[]> {
+  if (tasks.length === 0) {
+    return Promise.resolve<DetailedSearchResult[]>([])
+  }
+  const taskNumber = Math.min(50, tasks.length)
+  const results = tasks.slice(0, taskNumber).map<DetailedSearchResult>(scoreTask.bind(null, searchString))
+  const promise = new Promise<DetailedSearchResult[]>((resolve, reject) => {
+    setTimeout(() => {
+      scoreTasks(searchString, tasks.slice(taskNumber)).then((recursionResults: DetailedSearchResult[]) => {
+        resolve(results.concat(recursionResults))
+      })
+    }, 0)
+  })
+  return promise
+}
+
+
+function scoreTask(searchString: string, task: Task): DetailedSearchResult {
+  const splitters = /\W/
+  const splitSearchStrings = searchString.split(splitters).filter(Boolean)
+  const fields = fieldsForTask(task)
+    let detailedResult: SearchScore[] = []
+    let globalStepsScoreSet = false
+    let globalStepsScore = 1e10
+    let globalRelativeScore = 0
+    let bestGlobalRelativeScore = globalRelativeScore
+
+    let contributions = 0
+
+    // Find best match for each token
+    for (let searchToken of splitSearchStrings) {
+      searchToken = searchToken.toLowerCase()
+      let bestPerField: {[field: string]: SearchScore} = {}
+      for (let field of fields) {
+        for (let contentToken of (valueFromKey(task, field.key) || '').split(splitters).filter(Boolean)) {
+          contentToken = contentToken.toLowerCase()
+          let innerBest = searchScoreFromLevenshtien(levenshtien(searchToken, contentToken))
+          innerBest._content = contentToken
+          if (contentToken.length > searchToken.length) {
+            for (let i = 0; i <= contentToken.length - searchToken.length; i++) {
+              const subContent = contentToken.substring(i, searchToken.length + i)
+              const score = searchScoreFromLevenshtien(levenshtien(searchToken, subContent))
+              if (isBetterLevenshtien(score, innerBest)) {
+                innerBest = score
+                innerBest._content = subContent
+              }
+            }
+          }
+          if (!bestPerField[field.key] || isBetterLevenshtien(innerBest, bestPerField[field.key])) {
+            innerBest._search = searchToken
+            innerBest._field = field
+            bestPerField[field.key] = innerBest
+          }
+        }
+      }
+      const allScores: SearchScore[] = (Object as any).values(bestPerField)
+      const bestScores = allScores.filter((best) => { return best.similarity > 0.2 })
+      detailedResult = detailedResult.concat(bestScores)
+      for (let best of bestScores) {
+        if (!globalStepsScoreSet) {
+          globalStepsScore = 0
+          globalStepsScoreSet = true
+        }
+        globalStepsScore += best.steps * best.steps
+        globalRelativeScore += best.similarity * best.similarity
+        bestGlobalRelativeScore = Math.max(globalRelativeScore, bestGlobalRelativeScore)
+        contributions++
+      }
+    }
+    return {
+      task: task,
+      globalStepsScore: globalStepsScore / contributions,
+      globalRelativeScore: globalRelativeScore / contributions,
+      bestGlobalRelativeScore: bestGlobalRelativeScore,
+      detailedResult: detailedResult,
+      matches: {}
+    }
 }
 
 

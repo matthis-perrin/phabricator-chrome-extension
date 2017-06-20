@@ -10,6 +10,8 @@
     "@types/node": "^7.0.31",
     "@types/react": "^15.0.24",
     "@types/react-dom": "^15.5.0",
+    "@types/rsvp": "^3.3.0",
+    "@types/underscore": "^1.8.1",
     "babel-cli": "6.x.x",
     "babel-core": "6.x.x",
     "babel-eslint": "6.x.x",
@@ -51,6 +53,8 @@
     "jquery": "^3.1.1",
     "react": "^15.5.4",
     "react-dom": "^15.4.2",
-    "react-select": "^1.0.0-rc.3"
+    "react-select": "^1.0.0-rc.3",
+    "rsvp": "^3.5.0",
+    "underscore": "^1.8.3"
   }
 }

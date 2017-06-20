@@ -1,5 +1,4 @@
 import * as React from 'react'
-
 import {search} from '../actions/actions'
 import {
   ESCAPE,
