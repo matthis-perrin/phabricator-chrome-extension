@@ -1,0 +1,46 @@
+.phab-task-row {
+  display: flex;
+  align-content: stretch;
+  text-align: left;
+  &__left {
+    flex-grow: 0;
+    flex-shrink: 0;
+    align-self: flex-start;
+    &__id {
+      width: 50px;
+      margin-right: 10px;
+      font-weight: 600;
+    }
+  }
+  &__middle {
+    flex-grow: 1;
+    flex-shrink: 1;
+    align-self: flex-start;
+    &__title {
+      word-break: break-all;
+    }
+  }
+  &__right {
+    flex-grow: 0;
+    display: flex;
+    flex-direction: row-reverse;
+    flex-wrap: wrap;
+    align-content: space-around;
+    height: auto;
+    &__tag {
+      display: inline-block;
+      margin: 0 0 0 4px;
+      &:last-of-type {
+        margin: 0;
+      }
+    }
+  }
+  .highlight {
+    font-weight: 600;
+    &.lvl1 { background-color: rgba(255, 255, 0, 0.05) }
+    &.lvl2 { background-color: rgba(255, 255, 0, 0.15) }
+    &.lvl3 { background-color: rgba(255, 255, 0, 0.30) }
+    &.lvl4 { background-color: rgba(255, 255, 0, 0.60) }
+    &.lvl5 { background-color: rgba(255, 255, 0, 1.00) }
+  }
+}

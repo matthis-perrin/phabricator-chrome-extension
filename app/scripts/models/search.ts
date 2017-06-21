@@ -5,6 +5,10 @@ export interface SearchRange {
   length: number
 }
 
+export interface SearchRangeWithSimilarity extends SearchRange {
+  similarity: number
+}
+
 export interface SearchResult {
   task: Task
   score: {
@@ -12,10 +16,12 @@ export interface SearchResult {
     relative: number
     best: number
   }
-  matches: {[key: string]: SearchRange[]}
+  matches: SearchMatch
 }
 
 export interface SearchResults {
   topResults: SearchResult[]
   otherResults: SearchResult[]
 }
+
+export type SearchMatch = {[key: string]: SearchRangeWithSimilarity[]}

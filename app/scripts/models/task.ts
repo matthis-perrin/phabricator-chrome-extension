@@ -16,8 +16,8 @@ export interface TaskTag extends TaskDOM {}
 export interface TaskOwner extends TaskDOM {}
 
 export interface TaskPoints {
-  value?: number
-  dom?: JQuery
+  value: number
+  dom: JQuery
 }
 
 export interface Column {

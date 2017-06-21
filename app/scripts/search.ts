@@ -3,7 +3,9 @@ import {levenshtien, LevenshtienSearchResult} from './damerau-levenshtein'
 
 import {Task} from './models/task'
 import {
+  SearchMatch,
   SearchRange,
+  SearchRangeWithSimilarity,
   SearchResult,
   SearchResults,
 } from './models/search'
@@ -31,7 +33,7 @@ interface DetailedSearchResult {
   globalRelativeScore: number
   bestGlobalRelativeScore: number
   detailedResult: SearchScore[]
-  matches: {[key: string]: SearchRange[]}
+  matches: SearchMatch
 }
 
 
@@ -75,12 +77,19 @@ export class FuzzySearch {
 
         // Extract context for the top results
         for (let result of topResults) {
-          const matches: {[key: string]: SearchRange[]} = {}
+          const matches: {[key: string]: SearchRangeWithSimilarity[]} = {}
           for (let i = 0; i < result.detailedResult.length; i++) {
             const detail = result.detailedResult[i]
             const value = valueFromKey(result.task, detail._field.key) || ''
             const index = value.toLowerCase().indexOf(detail._content)
             const matchesInString = findMatches(detail._search, detail._content)
+              .map<SearchRangeWithSimilarity>(function(range) {
+                return {
+                  index: range.index,
+                  length: range.length,
+                  similarity: detail.similarity,
+                }
+              })
             matchesInString.forEach((match) => { match.index += index })
             if (!matches[detail._field.key]) {
               matches[detail._field.key] = []
@@ -92,7 +101,7 @@ export class FuzzySearch {
           for (let matchKey of Object.keys(matches)) {
             let matchData = matches[matchKey]
             if (matchData.length > 1) {
-              const stack: SearchRange[] = []
+              const stack: SearchRangeWithSimilarity[] = []
               matchData.sort((match1, match2) => {
                 return match1.index - match2.index
               })
@@ -202,7 +211,14 @@ function scoreTask(searchString: string, task: Task): DetailedSearchResult {
         }
       }
       const allScores: SearchScore[] = (Object as any).values(bestPerField)
-      const bestScores = allScores.filter((best) => { return best.similarity > 0.2 })
+      let bestScores = allScores.filter((best) => { return best.similarity > 0.2 })
+      if (bestScores.length > 0) {
+        if (bestScores[0].similarity >= 1) {
+          bestScores = bestScores.filter((best) => { return best.similarity >= 1 })
+        } else {
+          bestScores = [bestScores[0]]
+        }
+      }
       detailedResult = detailedResult.concat(bestScores)
       for (let best of bestScores) {
         if (!globalStepsScoreSet) {

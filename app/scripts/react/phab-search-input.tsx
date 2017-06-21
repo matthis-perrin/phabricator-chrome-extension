@@ -12,6 +12,7 @@ interface PhabSearchInputState {
 }
 
 export class PhabSearchInput extends React.Component<{}, PhabSearchInputState> {
+  displayName: 'PhabSearchInput'
   input: HTMLInputElement | undefined
 
   state = {

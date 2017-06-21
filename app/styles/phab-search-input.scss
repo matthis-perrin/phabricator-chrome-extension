@@ -2,7 +2,9 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  width: 80%;
+  box-sizing: border-box;
+  max-width: 900px;
+  width: 90%;
   height: 48px;
   margin: 20px auto 0 auto;
   input[type="text"], &__icon {
@@ -22,7 +24,7 @@
   }
   &__icon {
     position: relative;
-    right: -37px;
-    margin-top: -1px;
+    right: -10px;
+    margin-right: -28px;
   }
 }

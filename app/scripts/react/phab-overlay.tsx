@@ -12,6 +12,8 @@ interface PhabOverlayState {
 }
 
 export class PhabOverlay extends React.Component<{}, PhabOverlayState> {
+  displayName: 'PhabOverlay'
+
   state = {
     isVisible: false
   }

@@ -2,13 +2,15 @@ import * as React from 'react'
 
 import {SearchResults, SearchResult} from '../models/search'
 import {SEARCH_RESULTS_UPDATED, SearchStore} from '../stores/search'
-
+import {PhabTaskRow} from './phab-task-row'
 
 interface PhabSearchResultsState {
   searchResults?: SearchResults
 }
 
 export class PhabSearchResults extends React.Component<{}, PhabSearchResultsState> {
+  displayName: 'PhabSearchResults'
+
   state = {
     searchResults: undefined
   } as PhabSearchResultsState
@@ -25,23 +27,40 @@ export class PhabSearchResults extends React.Component<{}, PhabSearchResultsStat
     if (!this.state.searchResults) {
       return 'Empty search'
     }
+
+    const topResults = this.state.searchResults.topResults
+    const otherResults = this.state.searchResults.otherResults
+
     const mapResults = (searchResults: SearchResult[]): JSX.Element => {
       return (
         <div>
-          {searchResults.map((searchResult) => {
-            return <div>{searchResult.task.id + ' - ' + searchResult.task.title}</div>
+          {searchResults.map((searchResult: SearchResult): JSX.Element => {
+            return (
+              <PhabTaskRow
+                key={`task-${searchResult.task.id}`}
+                task={searchResult.task}
+                searchResult={searchResult}
+              />
+            )
           })}
         </div>
       )
     }
-    return (
-      <span>
-        <div>{`Top (${this.state.searchResults.topResults.length})`}</div>
-        <div>{mapResults(this.state.searchResults.topResults)}</div>
-        <div>{`Others (${this.state.searchResults.otherResults.length})`}</div>
-        <div>{mapResults(this.state.searchResults.otherResults)}</div>
-      </span>
-    )
+    if (topResults.length > 0) {
+      return (
+        <span>
+          <div>{`Top (${topResults.length})`}</div>
+          <div>{mapResults(topResults)}</div>
+        </span>
+      )
+    } else {
+      return (
+        <span>
+          <div>{`Others (${otherResults.length})`}</div>
+          <div>{mapResults(otherResults)}</div>
+        </span>
+      )
+    }
   }
 
   render() {
