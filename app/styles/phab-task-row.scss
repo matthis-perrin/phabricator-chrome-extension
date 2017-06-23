@@ -44,3 +44,24 @@
     &.lvl5 { background-color: rgba(255, 255, 0, 1.00) }
   }
 }
+
+.phab-task-row-wrapper {
+  margin-bottom: 4px;
+  padding: 6px;
+  cursor: pointer;
+  transition: 0.2s ease-in-out;
+  transition-property: transform, box-shadow;
+  border-width: 0 0 0 4px;
+  border-style: solid;
+  border-radius: 2px;
+  background-color: #fdfdfd;
+  &:hover {
+    $HOVER_ZOOM: 0.01;
+    transform-origin: center center 0px;
+    transform: matrix3d(1 + $HOVER_ZOOM, 0, 0, 0, 0, 1 + $HOVER_ZOOM, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);
+    box-shadow: 0 3px 6px rgba(0,0,0,0.16), 0 3px 6px rgba(0,0,0,0.23);
+  }
+  &--odd {
+    background-color: #f9f9f9;
+  }
+}

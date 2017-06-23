@@ -1,4 +1,5 @@
 import * as React from 'react'
+import * as cx from 'classnames'
 
 import {SearchResults, SearchResult} from '../models/search'
 import {SEARCH_RESULTS_UPDATED, SearchStore} from '../stores/search'
@@ -34,13 +35,23 @@ export class PhabSearchResults extends React.Component<{}, PhabSearchResultsStat
     const mapResults = (searchResults: SearchResult[]): JSX.Element => {
       return (
         <div>
-          {searchResults.map((searchResult: SearchResult): JSX.Element => {
+          {searchResults.map((searchResult: SearchResult, i: number): JSX.Element => {
+            const task = searchResult.task
+            const props = {
+              className: cx({
+                'phab-task-row-wrapper': true,
+                'phab-task-row-wrapper--odd': i % 2 === 1
+              }),
+              style: { borderColor: `transparent transparent transparent ${task.priority.colorHex}` },
+              key: `task-${task.id}`,
+            }
             return (
-              <PhabTaskRow
-                key={`task-${searchResult.task.id}`}
-                task={searchResult.task}
-                searchResult={searchResult}
-              />
+              <div {...props}>
+                <PhabTaskRow
+                  task={task}
+                  searchResult={searchResult}
+                />
+              </div>
             )
           })}
         </div>
