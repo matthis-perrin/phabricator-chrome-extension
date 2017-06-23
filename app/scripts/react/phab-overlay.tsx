@@ -1,6 +1,7 @@
 import * as React from 'react'
 import * as cx from 'classnames'
 
+import {AppStore, APP_VISIBLE_UPDATED} from '../stores/app'
 import {
   ESCAPE,
   KeyboardStore,
@@ -19,6 +20,7 @@ export class PhabOverlay extends React.Component<{}, PhabOverlayState> {
   }
 
   componentWillMount() {
+    AppStore.on(APP_VISIBLE_UPDATED, this.handleAppVisibleUpdated)
     KeyboardStore.on(SEARCH_SHORTCUT, this.handleSearchShortcut)
     KeyboardStore.on(ESCAPE, this.handleEscape)
   }
@@ -31,6 +33,10 @@ export class PhabOverlay extends React.Component<{}, PhabOverlayState> {
 
   private handleEscape = (event: JQueryEventObject) => {
     this.setState({isVisible: false})
+  }
+
+  private handleAppVisibleUpdated = () => {
+    this.setState({isVisible: AppStore.isAppVisible()})
   }
 
   render() {

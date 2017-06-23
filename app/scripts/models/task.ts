@@ -34,6 +34,7 @@ export interface Task {
   readonly owner?: TaskOwner
   readonly priority: TaskPriority
   readonly column: Column
+  readonly dom: JQuery
 }
 
 

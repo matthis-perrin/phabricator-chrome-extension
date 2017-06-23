@@ -1,6 +1,7 @@
 .phab-search-results {
   box-sizing: border-box;
   width: 100%;
+  max-width: 910px;
   max-height: calc(100% - 68px);
   margin: 0 auto;
   padding: 0 5px;

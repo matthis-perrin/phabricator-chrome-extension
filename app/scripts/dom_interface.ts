@@ -50,6 +50,7 @@ export class DomInterface {
       owner: DomInterface.parseTaskOwner(taskContent),
       priority: DomInterface.parseTaskPriority(task),
       column: column,
+      dom: task,
     }
   }
 

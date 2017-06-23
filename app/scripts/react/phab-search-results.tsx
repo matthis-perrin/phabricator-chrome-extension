@@ -1,7 +1,9 @@
 import * as React from 'react'
 import * as cx from 'classnames'
 
+import {setAppVisible} from '../actions/actions'
 import {SearchResults, SearchResult} from '../models/search'
+import {Task} from '../models/task'
 import {SEARCH_RESULTS_UPDATED, SearchStore} from '../stores/search'
 import {PhabTaskRow} from './phab-task-row'
 
@@ -24,6 +26,15 @@ export class PhabSearchResults extends React.Component<{}, PhabSearchResultsStat
     this.setState({searchResults: SearchStore.getSearchResults()})
   }
 
+  private handleRowClick(task: Task) {
+    setAppVisible(false)
+    task.dom.get(0).scrollIntoView({block: 'end', behavior: 'smooth'})
+    task.dom.addClass('shake')
+    setTimeout(function () {
+      task.dom.removeClass('shake')
+    }, 1000)
+  }
+
   private renderBody() {
     if (!this.state.searchResults) {
       return 'Empty search'
@@ -44,6 +55,7 @@ export class PhabSearchResults extends React.Component<{}, PhabSearchResultsStat
               }),
               style: { borderColor: `transparent transparent transparent ${task.priority.colorHex}` },
               key: `task-${task.id}`,
+              onClick: this.handleRowClick.bind(this, task)
             }
             return (
               <div {...props}>

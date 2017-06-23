@@ -1,0 +1,29 @@
+// .shake, .shake:hover {
+//   animation: shake 0.82s cubic-bezier(.36,.07,.19,.97) both;
+//   transform: matrix(1.00,0.18,-0.18,1.00,0,0) 0, 0);
+//   backface-visibility: hidden;
+//   perspective: 1000px;
+// }
+
+
+@keyframes shake {
+  0%   { transform: matrix(1.00, 0.00, 0.00, 1.00, 0.00, 0.00); }
+  10%  { transform: matrix(1.00, 0.05,-0.05, 1.00, 0.00, 0.00); }
+  20%  { transform: matrix(1.05, 0.00, 0.00, 1.05, 0.00, 0.00); }
+  30%  { transform: matrix(1.05,-0.05, 0.05, 1.05, 0.00, 0.00); }
+  40%  { transform: matrix(1.10, 0.00, 0.00, 1.10, 0.00, 0.00); }
+  50%  { transform: matrix(1.10, 0.05,-0.05, 1.10, 0.00, 0.00); }
+  60%  { transform: matrix(1.05, 0.00, 0.00, 1.05, 0.00, 0.00); }
+  70%  { transform: matrix(1.05,-0.05, 0.05, 1.05, 0.00, 0.00); }
+  80%  { transform: matrix(1.00, 0.00, 0.00, 1.00, 0.00, 0.00); }
+  90%  { transform: matrix(1.00, 0.05,-0.05, 1.00, 0.00, 0.00); }
+}
+.shake {
+  animation-name: shake;
+  animation-duration: 1s;
+  transform-origin: 50% 50%;
+  animation-iteration-count: 1;
+  animation-timing-function: linear;
+  border: solid 4px #386993;
+  z-index: 1000;
+}

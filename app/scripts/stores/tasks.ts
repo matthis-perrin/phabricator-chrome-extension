@@ -8,7 +8,7 @@ import {
 
 import {Task} from '../models/task'
 
-let tasks: Task[]  = []
+let tasks: Task[] = []
 
 export const TASKS_UPDATED = 'SEARCH_SET'
 

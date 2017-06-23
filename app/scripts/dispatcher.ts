@@ -3,11 +3,15 @@ import {Task} from './models/task'
 
 
 export enum ActionTypes {
+  SET_APP_VISIBLE,
   SET_SEARCH,
   SET_TASKS,
 }
 
 
+export interface SetAppVisiblePayload {
+  isVisible: boolean
+}
 export interface SetSearchPayload {
   search: string
 }
@@ -15,7 +19,7 @@ export interface SetTasksPayload {
   tasks: Task[]
 }
 
-type PayloadTypes = SetSearchPayload | SetTasksPayload
+type PayloadTypes = SetSearchPayload | SetTasksPayload | SetAppVisiblePayload
 
 
 class _Dispatcher extends EventEmitter2 {
